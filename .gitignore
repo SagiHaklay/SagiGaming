@@ -1,5 +1,4 @@
-./.venv/*
-./__pyache__/*
+.venv/
+__pyache__/*
 
-flaskr/__pycache__/__init__.cpython-312.pyc
-flaskr/__pycache__/db.cpython-312.pyc
+*.pyc
