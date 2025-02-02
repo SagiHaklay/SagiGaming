@@ -12,7 +12,7 @@ def create_app(test_config=None):
     app.config['MYSQL_HOST'] = 'localhost'
     app.config['MYSQL_USER'] = 'root'
     app.config['MYSQL_PASSWORD'] = 'Mysqlpassword42!'
-    app.config['MYSQL_DB'] = 'flask'
+    app.config['MYSQL_DB'] = 'sagigaming'
 
     if test_config is None:
         # load the instance config, if it exists, when not testing
