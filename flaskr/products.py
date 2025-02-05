@@ -41,6 +41,27 @@ def index():
         "Rating": prod[4]
     } for prod in result]
 
+@bp.route('/<id>')
+def get_product(id):
+    cursor = db.connection.cursor()
+    cursor.execute('SELECT * FROM products WHERE Id = %s', (id,))
+    result = cursor.fetchone()
+    if result is None:
+        return f"Product {id} does not exist"
+    return {
+        "Id": result[0],
+        "Name": result[1],
+        "Description": result[2],
+        "CategoryId": result[3],
+        "ManufacturerId": result[4],
+        "ModelId": result[5],
+        "UnitPrice": result[6],
+        "UnitsInStock": result[7],
+        "Image": result[8],
+        "TechnicalDetails": result[9],
+        "OtherDetails": result[10]
+    }
+
 @bp.route('/categories')
 def categories():
     cursor = db.connection.cursor()
@@ -58,6 +79,7 @@ def get_category(id):
     cursor = db.connection.cursor()
     cursor.execute('SELECT * FROM categories WHERE Id = %s', (id,))
     result = cursor.fetchone()
+    cursor.close()
     return result
 
 @bp.route('/manufacturers')
@@ -75,7 +97,9 @@ def manufacturers():
 def get_manufacturer(id):
     cursor = db.connection.cursor()
     cursor.execute('SELECT * FROM manufacturers WHERE Id = %s', (id,))
-    return cursor.fetchone()
+    result = cursor.fetchone()
+    cursor.close()
+    return result
 
 @bp.route('/models')
 def models():
@@ -91,4 +115,6 @@ def models():
 def get_model(id):
     cursor = db.connection.cursor()
     cursor.execute('SELECT * FROM models WHERE Id = %s', (id,))
-    return cursor.fetchone()
+    result = cursor.fetchone()
+    cursor.close()
+    return result
