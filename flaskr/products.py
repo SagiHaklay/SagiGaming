@@ -8,14 +8,16 @@ bp = Blueprint('products', __name__, url_prefix='/product')
 @bp.route('/')
 def index():
     cursor = db.connection.cursor()
-    cursor.execute('SELECT Id, Name, UnitPrice FROM products')
+    cursor.execute('SELECT Id, Name, UnitPrice, Image, avg(rating) FROM products AS P LEFT JOIN ratings AS R ON P.Id = R.ProductId GROUP BY Id')
     result = cursor.fetchall()
     cursor.close()
     print(result)
     return [{
         "Id": prod[0],
         "Name": prod[1],
-        "Price": prod[2]
+        "Price": prod[2],
+        "Image": prod[3],
+        "Rating": prod[4]
     } for prod in result]
 
 @bp.route('/categories')
