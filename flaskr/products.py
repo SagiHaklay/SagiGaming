@@ -12,13 +12,44 @@ def index():
     result = cursor.fetchall()
     cursor.close()
     print(result)
-    return str(result)
+    return [{
+        "Id": prod[0],
+        "Name": prod[1],
+        "Price": prod[2]
+    } for prod in result]
 
 @bp.route('/categories')
 def categories():
     cursor = db.connection.cursor()
-    cursor.execute('SELECT Id, Name FROM categories')
+    cursor.execute('SELECT * FROM categories')
     result = cursor.fetchall()
     cursor.close()
     print(result)
-    return str(result)
+    return [{
+        "Id": cat[0],
+        "Name": cat[1],
+        "Image": cat[2]
+    } for cat in result]
+
+@bp.route('/manufacturers')
+def manufacturers():
+    cursor = db.connection.cursor()
+    cursor.execute('SELECT * FROM manufacturers')
+    result = cursor.fetchall()
+    cursor.close()
+    return [{
+        "Id": m[0],
+        "Name": m[1],
+        "Logo": m[2]
+    } for m in result]
+
+@bp.route('/models')
+def models():
+    cursor = db.connection.cursor()
+    cursor.execute('SELECT * FROM models')
+    result = cursor.fetchall()
+    cursor.close()
+    return [{
+        "Id": m[0],
+        "Name": m[1]
+    } for m in result]
