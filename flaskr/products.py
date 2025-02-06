@@ -1,5 +1,5 @@
 from flask import (
-    Blueprint, flash, g, request
+    Blueprint, request
 )
 from flaskr.db import db
 
@@ -46,6 +46,7 @@ def get_product(id):
     cursor = db.connection.cursor()
     cursor.execute('SELECT * FROM products WHERE Id = %s', (id,))
     result = cursor.fetchone()
+    cursor.close()
     if result is None:
         return f"Product {id} does not exist"
     return {
