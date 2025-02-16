@@ -1,5 +1,5 @@
 from flask import (
-    Blueprint, request
+    Blueprint, request, abort
 )
 from flaskr.db import db
 
@@ -9,13 +9,13 @@ bp = Blueprint('products', __name__, url_prefix='/product')
 def index():
     category_id = request.args.get('category', '')
     if category_id and get_category(category_id) is None:
-        return f"Category {category_id} does not exist"
+        abort(404, description=f"Category {category_id} does not exist")
     manufacturer_id = request.args.get('manufacturer', '')
     if manufacturer_id and get_manufacturer(manufacturer_id) is None:
-        return f"Manufacturer {manufacturer_id} does not exist"
+        abort(404, description=f"Manufacturer {manufacturer_id} does not exist")
     model_id = request.args.get('model', '')
     if model_id and get_model(model_id) is None:
-        return f"Model {model_id} does not exist"
+        abort(404, description=f"Model {model_id} does not exist")
     filters = []
     if category_id:
         filters.append(f"CategoryId = {category_id}")
@@ -32,7 +32,7 @@ def index():
     cursor.execute(query)
     result = cursor.fetchall()
     cursor.close()
-    print(result)
+    #print(result)
     return [{
         "Id": prod[0],
         "Name": prod[1],
@@ -48,7 +48,7 @@ def get_product(id):
     result = cursor.fetchone()
     cursor.close()
     if result is None:
-        return f"Product {id} does not exist"
+        abort(404, description=f"Product {id} does not exist")
     return {
         "Id": result[0],
         "Name": result[1],
