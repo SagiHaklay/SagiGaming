@@ -10,7 +10,7 @@ else:
 
 
 #cart
-r = requests.post(base_url + '/cart/add', data={'cartId': 5, 'productId': 7, 'quantity': 2})
+r = requests.post(base_url + '/cart/5/remove', data={'productId': 8})
 if r.status_code == 200:
     print(r.text)
 else:
