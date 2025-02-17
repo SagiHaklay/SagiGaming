@@ -22,11 +22,24 @@ else:
     print(r.text)'''
 
 #auth
-r = requests.post(base_url+'/auth/register', data={
-    'firstName': 'A',
-    'lastName': 'B',
-    'email': 'ab@gmail.com',
-    'phone': '0501112222',
+r = requests.post(base_url+'/auth/login', data={
+    'email': 'cd@gmail.com',
     'password': 'password'
 })
-print(r.text)
+if r.status_code == 200:
+    print(r.cookies)
+    print(r.json())
+else:
+    print(r.text)
+r2 = requests.post(base_url+'/auth/2/edit', data={
+    'firstName': 'C',
+    'lastName': 'D',
+    'email': 'cd@gmail.com',
+    'phone': '05444443'
+}, cookies=r.cookies)
+if r2.status_code == 200:
+    print(r2.json())
+else:
+    print(r2.text)
+r3 = requests.post(base_url+'/auth/logout')
+print(r3.text)
