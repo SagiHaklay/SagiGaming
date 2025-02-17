@@ -69,7 +69,7 @@ def categories():
     cursor.execute('SELECT * FROM categories')
     result = cursor.fetchall()
     cursor.close()
-    print(result)
+    #print(result)
     return [{
         "Id": cat[0],
         "Name": cat[1],

@@ -41,4 +41,7 @@ def create_app(test_config=None):
     from . import cart
     app.register_blueprint(cart.bp)
 
+    from . import auth
+    app.register_blueprint(auth.bp)
+
     return app
