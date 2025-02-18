@@ -1,9 +1,10 @@
 from flask import (
-    Blueprint, request, abort
+    Blueprint, request, abort, session
 )
 from flaskr.db import db
 from flaskr.products import get_product
 import datetime
+from .util import check_required
 
 bp = Blueprint('cart', __name__, url_prefix='/cart')
 
@@ -44,25 +45,20 @@ def get_product_in_cart(cart_id, product_id):
 def create_cart():
     cursor = db.connection.cursor()
     date = datetime.datetime.now().strftime('%Y-%m-%d')
-    #print(date)
-
-    user_id = request.form.get('user', '')
+    user_id = None
+    if 'user_id' in session:
+        user_id = session['user_id']
+    #user_id = request.form.get('user', '')
     if user_id:
         cursor.execute("INSERT INTO carts (IsGuestCart, CreatedAt) VALUES (0, DATE %s)", (date,))
-        db.connection.commit()
-        cursor.execute('SELECT Id FROM carts ORDER BY Id DESC LIMIT 1')
-        new_cart_id = cursor.fetchone()
-        cursor.execute('UPDATE users SET ActiveCartId = %s WHERE Id = %s', (new_cart_id, user_id))
-        db.connection.commit()
-        cursor.close()
-        return {
-            "CartId": new_cart_id
-        }
-
-    cursor.execute("INSERT INTO carts (IsGuestCart, CreatedAt) VALUES (1, DATE %s)", (date,))
+    else:
+        cursor.execute("INSERT INTO carts (IsGuestCart, CreatedAt) VALUES (1, DATE %s)", (date,))
     db.connection.commit()
     cursor.execute('SELECT Id FROM carts ORDER BY Id DESC LIMIT 1')
     new_cart_id = cursor.fetchone()
+    if user_id:
+        cursor.execute('UPDATE users SET ActiveCartId = %s WHERE Id = %s', (new_cart_id, user_id))
+        db.connection.commit()
     cursor.close()
     return {
         "CartId": new_cart_id
@@ -70,6 +66,7 @@ def create_cart():
 
 @bp.route('/<cart_id>/add', methods=('POST',))
 def add_product_to_cart(cart_id):
+    check_required(('productId', 'quantity'))
     product_id = request.form['productId']
     quantity = request.form['quantity']
     if get_cart(cart_id) is None:
@@ -92,6 +89,7 @@ def add_product_to_cart(cart_id):
         
 @bp.route('/<cart_id>/update', methods=('POST',))
 def update_product_in_cart(cart_id):
+    check_required(('productId', 'quantity'))
     product_id = request.form['productId']
     quantity = request.form['quantity']
     if get_cart(cart_id) is None:
@@ -111,6 +109,7 @@ def update_product_in_cart(cart_id):
 
 @bp.route('/<cart_id>/remove', methods=('POST',))
 def remove_product_from_cart(cart_id):
+    check_required(('productId',))
     product_id = request.form['productId']
     if get_cart(cart_id) is None:
         abort(404, description=f'Cart {cart_id} does not exist')

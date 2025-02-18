@@ -31,11 +31,8 @@ if r.status_code == 200:
     print(r.json())
 else:
     print(r.text)
-r2 = requests.post(base_url+'/auth/2/edit', data={
-    'firstName': 'C',
-    'lastName': 'D',
-    'email': 'cd@gmail.com',
-    'phone': '05444443'
+r2 = requests.post(base_url+'/user/5/cart', data={
+    'cartId': 1
 }, cookies=r.cookies)
 if r2.status_code == 200:
     print(r2.json())
