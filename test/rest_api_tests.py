@@ -23,16 +23,16 @@ else:
 
 #auth
 r = requests.post(base_url+'/auth/login', data={
-    'email': 'cd@gmail.com',
-    'password': 'password'
+    'email': 'sahaklay@gmail.com',
+    'password': 'admin'
 })
 if r.status_code == 200:
     print(r.cookies)
     print(r.json())
 else:
     print(r.text)
-r2 = requests.post(base_url+'/user/5/cart', data={
-    'cartId': 1
+r2 = requests.post(base_url+'/product/1/rate', data={
+    'rating': 5
 }, cookies=r.cookies)
 if r2.status_code == 200:
     print(r2.json())

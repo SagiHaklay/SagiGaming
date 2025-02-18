@@ -57,11 +57,11 @@ def create_cart():
     cursor.execute('SELECT Id FROM carts ORDER BY Id DESC LIMIT 1')
     new_cart_id = cursor.fetchone()
     if user_id:
-        cursor.execute('UPDATE users SET ActiveCartId = %s WHERE Id = %s', (new_cart_id, user_id))
+        cursor.execute('UPDATE users SET ActiveCartId = %s WHERE Id = %s', (new_cart_id[0], user_id))
         db.connection.commit()
     cursor.close()
     return {
-        "CartId": new_cart_id
+        "CartId": new_cart_id[0]
     }
 
 @bp.route('/<cart_id>/add', methods=('POST',))

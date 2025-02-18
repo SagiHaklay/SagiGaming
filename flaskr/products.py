@@ -1,5 +1,5 @@
 from flask import (
-    Blueprint, request, abort
+    Blueprint, request, abort, session
 )
 from flaskr.db import db
 
@@ -41,7 +41,7 @@ def index():
         "Rating": prod[4]
     } for prod in result]
 
-@bp.route('/<id>')
+@bp.route('/<int:id>')
 def get_product(id):
     cursor = db.connection.cursor()
     cursor.execute('SELECT * FROM products WHERE Id = %s', (id,))
@@ -119,3 +119,27 @@ def get_model(id):
     result = cursor.fetchone()
     cursor.close()
     return result
+
+@bp.route('/<int:id>/rate', methods=('POST',))
+def rate_product(id):
+    if 'user_id' not in session:
+        abort(401)
+    if 'rating' not in request.form:
+        abort(400, description='Rating required')
+    user_id = session['user_id']
+    rating = int(request.form['rating'])
+    if rating < 1 or rating > 5:
+        abort(400, description='Rating out of range')
+    get_product(id)
+    cursor = db.connection.cursor()
+    cursor.execute('SELECT * FROM ratings WHERE ProductId = %s AND UserId = %s', (id, user_id))
+    existing_rating = cursor.fetchone()
+    if existing_rating:
+        abort(401, description=f'User {user_id} already rated product {id}')
+    cursor.execute('INSERT INTO ratings (ProductId, UserId, rating) VALUES (%s, %s, %s)', (id, user_id, rating))
+    db.connection.commit()
+    cursor.execute('SELECT AVG(rating) FROM ratings WHERE ProductId = %s', (id,))
+    avg_rating = cursor.fetchone()
+    return {
+        'avg_rating': avg_rating[0]
+    }
