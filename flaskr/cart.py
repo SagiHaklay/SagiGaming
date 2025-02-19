@@ -4,7 +4,7 @@ from flask import (
 from flaskr.db import db
 from flaskr.products import get_product
 import datetime
-from .util import check_required
+from flaskr.util import check_required, get_active_cart_by_user_id, cart_in_order
 
 bp = Blueprint('cart', __name__, url_prefix='/cart')
 
@@ -64,7 +64,7 @@ def create_cart():
         "CartId": new_cart_id[0]
     }
 
-@bp.route('/<cart_id>/add', methods=('POST',))
+@bp.route('/<int:cart_id>/add', methods=('POST',))
 def add_product_to_cart(cart_id):
     check_required(('productId', 'quantity'))
     product_id = request.form['productId']
@@ -81,13 +81,17 @@ def add_product_to_cart(cart_id):
     if prod['UnitsInStock'] < int(quantity):
         abort(400, description='Not enough units in stock')
 
+    if 'user_id' in session:
+        user_id = session['user_id']
+        if get_active_cart_by_user_id(user_id) != cart_id:
+            abort(401, description=f'Cart {cart_id} is not associated with user {user_id}')
     cursor = db.connection.cursor()
     cursor.execute("INSERT INTO cart_products (ProductId, CartId, Quantity, UnitPrice) VALUES (%s, %s, %s, %s)", (product_id, cart_id, quantity, prod['UnitPrice']))
     db.connection.commit()
     cursor.close()
     return "success"
         
-@bp.route('/<cart_id>/update', methods=('POST',))
+@bp.route('/<int:cart_id>/update', methods=('POST',))
 def update_product_in_cart(cart_id):
     check_required(('productId', 'quantity'))
     product_id = request.form['productId']
@@ -101,13 +105,17 @@ def update_product_in_cart(cart_id):
     prod = get_product(product_id)
     if prod['UnitsInStock'] < int(quantity):
         abort(400, description='Not enough units in stock')
+    if 'user_id' in session:
+        user_id = session['user_id']
+        if get_active_cart_by_user_id(user_id) != cart_id:
+            abort(401, description=f'Cart {cart_id} is not associated with user {user_id}')
     cursor = db.connection.cursor()
     cursor.execute("UPDATE cart_products SET Quantity = %s WHERE CartId = %s AND ProductId = %s", (quantity, cart_id, product_id))
     db.connection.commit()
     cursor.close()
     return "success"
 
-@bp.route('/<cart_id>/remove', methods=('POST',))
+@bp.route('/<int:cart_id>/remove', methods=('POST',))
 def remove_product_from_cart(cart_id):
     check_required(('productId',))
     product_id = request.form['productId']
@@ -115,8 +123,45 @@ def remove_product_from_cart(cart_id):
         abort(404, description=f'Cart {cart_id} does not exist')
     if get_product_in_cart(cart_id, product_id) is None:
         abort(400, description=f'Product {product_id} is not in Cart {cart_id}')
+    if 'user_id' in session:
+        user_id = session['user_id']
+        if get_active_cart_by_user_id(user_id) != cart_id:
+            abort(401, description=f'Cart {cart_id} is not associated with user {user_id}')
     cursor = db.connection.cursor()
     cursor.execute("DELETE FROM cart_products WHERE CartId = %s AND ProductId = %s", (cart_id, product_id))
     db.connection.commit()
     cursor.close()
     return "success"
+
+@bp.route('/<int:cart_id>/order', methods=('POST',))
+def send_order(cart_id):
+    if 'user_id' not in session:
+        abort(401)
+    user_id = session['user_id']
+    fields = ('city', 'street', 'houseNum')
+    check_required(fields)
+    city, street, houseNum = (request.form[field] for field in fields)
+    date = datetime.datetime.now().strftime('%Y-%m-%d')
+    cart_products = get_cart_products(cart_id)
+    if len(cart_products) == 0:
+        abort(400, description=f'Cart {cart_id} is empty')
+    if int(houseNum) <= 0:
+        abort(400, description='Invalid house num')
+    if cart_in_order(cart_id):
+        abort(401, description=f'Cart {cart_id} is associated with an existing order')
+    if get_active_cart_by_user_id(user_id) != cart_id:
+        abort(401, description=f'Cart {cart_id} is not associated with user {user_id}')
+    cursor = db.connection.cursor()
+    for prod in cart_products:
+        cursor.execute('UPDATE cart_products SET UnitPrice = %s WHERE CartId = %s AND ProductId = %s', (prod['UnitPrice'], cart_id, prod['Id']))
+        db.connection.commit()
+    cursor.execute("INSERT INTO orders (CartId, CustomerId, OrderDate, City, Street, HouseNum, Status) VALUES (%s, %s, %s, %s, %s, %s, 'pending')", 
+                   (cart_id, user_id, date, city, street, houseNum))
+    db.connection.commit()
+    cursor.execute('SELECT Id, Status FROM orders ORDER BY Id DESC LIMIT 1')
+    new_order = cursor.fetchone()
+    cursor.close()
+    return {
+        'OrderId': new_order[0],
+        'Status': new_order[1]
+    }
