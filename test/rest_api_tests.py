@@ -32,9 +32,9 @@ if r.status_code == 200:
 else:
     print(r.text)
 r2 = requests.post(base_url+'/cart/6/order', data={
-    'city': 'Shoham',
-    'street': 'Mitzpe',
-    'houseNum': 26
+    'city': 'Or Yehuda',
+    'street': 'Moshe Dayan',
+    'houseNum': 1
 }, cookies=r.cookies)
 if r2.status_code == 200:
     print(r2.json())

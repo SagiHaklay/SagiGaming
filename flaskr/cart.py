@@ -21,7 +21,7 @@ def get_cart_products(id):
         abort(404, description="Cart not found")
     cursor = db.connection.cursor()
     # Get for each product in cart id, name, image, CURRENT unit price and quantity
-    cursor.execute('SELECT ProductId, P.Name, P.UnitPrice, P.Image, Quantity FROM cart_products AS C JOIN products AS P ON C.ProductId = P.Id WHERE CartId = %s', (id,))
+    cursor.execute('SELECT ProductId, P.Name, P.UnitPrice, P.Image, Quantity, P.UnitsInStock FROM cart_products AS C JOIN products AS P ON C.ProductId = P.Id WHERE CartId = %s', (id,))
     result = cursor.fetchall()
     cursor.close()
     return [{
@@ -29,7 +29,8 @@ def get_cart_products(id):
         "Name": prod[1],
         "UnitPrice": prod[2],
         "Image": prod[3],
-        "Quantity": prod[4]
+        "Quantity": prod[4],
+        "UnitsInStock": prod[5]
     } for prod in result]
 
 def get_product_in_cart(cart_id, product_id):
@@ -157,6 +158,9 @@ def send_order(cart_id):
         db.connection.commit()
     cursor.execute("INSERT INTO orders (CartId, CustomerId, OrderDate, City, Street, HouseNum, Status) VALUES (%s, %s, %s, %s, %s, %s, 'pending')", 
                    (cart_id, user_id, date, city, street, houseNum))
+    cursor.execute('UPDATE users SET ActiveCartId = NULL WHERE Id = %s', (user_id,))
+    for prod in cart_products:
+        cursor.execute('UPDATE products SET UnitsInStock = %s WHERE Id = %s', (prod['UnitsInStock'] - prod['Quantity'], prod['Id']))
     db.connection.commit()
     cursor.execute('SELECT Id, Status FROM orders ORDER BY Id DESC LIMIT 1')
     new_order = cursor.fetchone()
