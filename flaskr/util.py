@@ -28,3 +28,9 @@ def cart_in_order(cart_id):
     order = cursor.fetchone()
     cursor.close()
     return order is not None
+
+def set_password(user_id, password):
+    cursor = db.connection.cursor()
+    cursor.execute('UPDATE users SET Password = %s WHERE Id = %s', (password, user_id))
+    db.connection.commit()
+    cursor.close()

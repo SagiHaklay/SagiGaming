@@ -31,13 +31,11 @@ if r.status_code == 200:
     print(r.json())
 else:
     print(r.text)
-r2 = requests.post(base_url+'/cart/6/order', data={
-    'city': 'Or Yehuda',
-    'street': 'Moshe Dayan',
-    'houseNum': 1
+r2 = requests.post(base_url+'/user/5/change_password', data={
+    'password': 'password2'
 }, cookies=r.cookies)
 if r2.status_code == 200:
-    print(r2.json())
+    print(r2.text)
 else:
     print(r2.text)
 r3 = requests.post(base_url+'/auth/logout')

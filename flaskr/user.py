@@ -3,8 +3,8 @@ from flask import (
 )
 from flaskr.db import db
 import re
-from .util import check_required, get_user_by_email
-from .cart import get_cart
+from flaskr.util import check_required, get_user_by_email, set_password
+from flaskr.cart import get_cart
 
 bp = Blueprint('user', __name__, url_prefix='/user')
 
@@ -56,3 +56,12 @@ def set_active_cart(id):
     return {
         'ActiveCartId': cart_id
     }
+
+@bp.route('/<int:id>/change_password', methods=('POST',))
+def change_password(id):
+    if 'user_id' not in session or session['user_id'] != id:
+        abort(401)
+    check_required(('password',))
+    password = request.form['password']
+    set_password(id, password)
+    return 'success'
