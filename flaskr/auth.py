@@ -1,9 +1,12 @@
 from flask import (
-    Blueprint, request, abort, session
+    Blueprint, request, abort, session, url_for, current_app, render_template_string
 )
 from flaskr.db import db
 import re
-from .util import check_required, get_user_by_email
+from flaskr.util import check_required, get_user_by_email, set_password
+from flask_mailman import EmailMessage
+from itsdangerous import URLSafeTimedSerializer, BadSignature, SignatureExpired
+from flaskr.templates.reset_password_email_content import reset_password_email_html_content
 
 bp = Blueprint('auth', __name__, url_prefix='/auth')
 
@@ -58,3 +61,43 @@ def login():
 def logout():
     session.clear()
     return 'Logout success!'
+
+
+@bp.route('/password_reset', methods=('POST',))
+def send_reset_password_email():
+    check_required(('email',))
+    email = request.form['email']
+    user = get_user_by_email(email)
+    if user is None:
+        abort(404, description='Email address does not belong to any existing user.')
+    serializer = URLSafeTimedSerializer(current_app.config['SECRET_KEY'])
+    token = serializer.dumps(email, salt=user[5])
+    reset_password_url = url_for('auth/reset_password', token=token, user_id=user[0], _external=True)
+    email_body = render_template_string(reset_password_email_html_content, reset_password_url=reset_password_url)
+    email_msg = EmailMessage(subject='Reset Password', body=email_body, to=[email])
+    email_msg.content_subtype = 'html'
+    email_msg.send()
+    return 'Message sent'
+
+@bp.route('/password_reset/<token>/<int:user_id>', methods=('GET', 'POST'))
+def reset_password(token, user_id):
+    cursor = db.connection.cursor()
+    cursor.execute('SELECT Email, Password FROM users WHERE Id = %s', (user_id,))
+    user = cursor.fetchone()
+    cursor.close()
+    if user is None:
+        abort(404, description='User does not exist')
+    serializer = URLSafeTimedSerializer(current_app.config['SECRET_KEY'])
+    try:
+        token_user_email = serializer.loads(token, max_age=600, salt=user[1])
+    except (BadSignature, SignatureExpired):
+        abort(401, description='Invalid token')
+    if token_user_email != user[0]:
+        abort(401, description='Invalid token')
+    if request.method == 'POST':
+        password = request.form['password']
+        password2 = request.form['password2']
+        # check password equals password2
+        set_password(user_id, password)
+        # return success template
+    # return password reset from template
