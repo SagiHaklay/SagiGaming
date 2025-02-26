@@ -72,6 +72,7 @@ def send_reset_password_email():
         abort(404, description='Email address does not belong to any existing user.')
     serializer = URLSafeTimedSerializer(current_app.config['SECRET_KEY'])
     token = serializer.dumps(email, salt=user[5])
+    # change url to the appropriate password reset form url
     reset_password_url = url_for('auth/reset_password', token=token, user_id=user[0], _external=True)
     email_body = render_template_string(reset_password_email_html_content, reset_password_url=reset_password_url)
     email_msg = EmailMessage(subject='Reset Password', body=email_body, to=[email])
@@ -79,7 +80,7 @@ def send_reset_password_email():
     email_msg.send()
     return 'Message sent'
 
-@bp.route('/password_reset/<token>/<int:user_id>', methods=('GET', 'POST'))
+@bp.route('/password_reset/<token>/<int:user_id>', methods=('POST',))
 def reset_password(token, user_id):
     cursor = db.connection.cursor()
     cursor.execute('SELECT Email, Password FROM users WHERE Id = %s', (user_id,))
@@ -94,10 +95,6 @@ def reset_password(token, user_id):
         abort(401, description='Invalid token')
     if token_user_email != user[0]:
         abort(401, description='Invalid token')
-    if request.method == 'POST':
-        password = request.form['password']
-        password2 = request.form['password2']
-        # check password equals password2
-        set_password(user_id, password)
-        # return success template
-    # return password reset from template
+    password = request.form['password']
+    set_password(user_id, password)
+    return 'Password reset success!'
