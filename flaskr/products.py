@@ -2,6 +2,7 @@ from flask import (
     Blueprint, request, abort, session
 )
 from flaskr.db import db
+from validation import validate_login, validate_rating, check_required
 
 bp = Blueprint('products', __name__, url_prefix='/product')
 
@@ -122,14 +123,11 @@ def get_model(id):
 
 @bp.route('/<int:id>/rate', methods=('POST',))
 def rate_product(id):
-    if 'user_id' not in session:
-        abort(401)
-    if 'rating' not in request.form:
-        abort(400, description='Rating required')
+    validate_login()
+    check_required(('rating',))
     user_id = session['user_id']
     rating = int(request.form['rating'])
-    if rating < 1 or rating > 5:
-        abort(400, description='Rating out of range')
+    validate_rating(rating)
     get_product(id)
     cursor = db.connection.cursor()
     cursor.execute('SELECT * FROM ratings WHERE ProductId = %s AND UserId = %s', (id, user_id))

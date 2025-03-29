@@ -2,24 +2,20 @@ from flask import (
     Blueprint, request, abort, session
 )
 from flaskr.db import db
-import re
-from flaskr.util import check_required, get_user_by_email, set_password
+from flaskr.util import get_user_by_email, set_password
 from flaskr.cart import get_cart
+from validation import check_required, get_fields_from_request, validate_user_login, validate_email, validate_phone
 
 bp = Blueprint('user', __name__, url_prefix='/user')
 
 @bp.route('/<int:id>/edit', methods=('POST',))
 def edit_profile(id):
-    if 'user_id' not in session or session['user_id'] != id:
-        #print(session)
-        abort(401)
+    validate_user_login(id)
     required_fields = ('firstName', 'lastName', 'email', 'phone')
     check_required(required_fields)
-    first_name, last_name, email, phone = (request.form[field] for field in required_fields)
-    if not re.match(r'[^@]+@[^@]+\.[^@]+', email):
-        abort(400, description='Invalid email address')
-    if not re.match(r'^[0-9]+$', phone) or len(phone) > 10:
-        abort(400, description='Invalid phone number')
+    first_name, last_name, email, phone = get_fields_from_request(required_fields)
+    validate_email(email)
+    validate_phone(phone)
     user = get_user_by_email(email)
     if user is not None and user[0] != id:
         abort(400, description='Email is already used by an existing user')
@@ -36,9 +32,7 @@ def edit_profile(id):
 
 @bp.route('/<int:id>/cart', methods=('POST',))
 def set_active_cart(id):
-    if 'user_id' not in session or session['user_id'] != id:
-        #print(session)
-        abort(401)
+    validate_user_login(id)
     check_required(('cartId',))
     cart_id = request.form['cartId']
     cart = get_cart(cart_id)
@@ -59,8 +53,7 @@ def set_active_cart(id):
 
 @bp.route('/<int:id>/change_password', methods=('POST',))
 def change_password(id):
-    if 'user_id' not in session or session['user_id'] != id:
-        abort(401)
+    validate_user_login(id)
     check_required(('password',))
     password = request.form['password']
     set_password(id, password)

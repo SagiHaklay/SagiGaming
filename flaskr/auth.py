@@ -2,11 +2,11 @@ from flask import (
     Blueprint, request, abort, session, url_for, current_app, render_template_string
 )
 from flaskr.db import db
-import re
-from flaskr.util import check_required, get_user_by_email, set_password
+from flaskr.util import get_user_by_email, set_password
 from flask_mailman import EmailMessage
 from itsdangerous import URLSafeTimedSerializer, BadSignature, SignatureExpired
 from flaskr.templates.reset_password_email_content import reset_password_email_html_content
+from validation import check_required, get_fields_from_request, validate_email, validate_phone
 
 bp = Blueprint('auth', __name__, url_prefix='/auth')
 
@@ -18,11 +18,9 @@ bp = Blueprint('auth', __name__, url_prefix='/auth')
 def register():
     required_fields = ('firstName', 'lastName', 'email', 'phone', 'password')
     check_required(required_fields)
-    first_name, last_name, email, phone, password = (request.form[field] for field in required_fields)
-    if not re.match(r'[^@]+@[^@]+\.[^@]+', email):
-        abort(400, description='Invalid email address')
-    if not re.match(r'^[0-9]+$', phone) or len(phone) > 10:
-        abort(400, description='Invalid phone number')
+    first_name, last_name, email, phone, password = get_fields_from_request(required_fields)
+    validate_email(email)
+    validate_phone(phone)
     if get_user_by_email(email) is not None:
         abort(400, description='Email is already used by an existing user')
     cursor = db.connection.cursor()

@@ -4,7 +4,8 @@ from flask import (
 from flaskr.db import db
 from flaskr.products import get_product
 import datetime
-from flaskr.util import check_required, get_active_cart_by_user_id, cart_in_order
+from flaskr.util import get_active_cart_by_user_id, cart_in_order
+from validation import check_required, validate_login, validate_positive, validate_enough_units_in_stock
 
 bp = Blueprint('cart', __name__, url_prefix='/cart')
 
@@ -75,12 +76,10 @@ def add_product_to_cart(cart_id):
     if get_product_in_cart(cart_id, product_id) is not None:
         abort(400, description=f'Product {product_id} already in Cart {cart_id}')
         
-    if int(quantity) <= 0:
-        abort(400, description='Quantity must be a positive integer')
+    validate_positive(quantity, 'Quantity')
 
     prod = get_product(product_id)
-    if prod['UnitsInStock'] < int(quantity):
-        abort(400, description='Not enough units in stock')
+    validate_enough_units_in_stock(quantity, prod['UnitsInStock'])
 
     if 'user_id' in session:
         user_id = session['user_id']
@@ -101,11 +100,9 @@ def update_product_in_cart(cart_id):
         abort(404, description=f'Cart {cart_id} does not exist')
     if get_product_in_cart(cart_id, product_id) is None:
         abort(400, description=f'Product {product_id} is not in Cart {cart_id}')
-    if int(quantity) <= 0:
-        abort(400, description='Quantity must be a positive integer')
+    validate_positive(quantity, 'Quantity')
     prod = get_product(product_id)
-    if prod['UnitsInStock'] < int(quantity):
-        abort(400, description='Not enough units in stock')
+    validate_enough_units_in_stock(quantity, prod['UnitsInStock'])
     if 'user_id' in session:
         user_id = session['user_id']
         if get_active_cart_by_user_id(user_id) != cart_id:
@@ -136,8 +133,7 @@ def remove_product_from_cart(cart_id):
 
 @bp.route('/<int:cart_id>/order', methods=('POST',))
 def send_order(cart_id):
-    if 'user_id' not in session:
-        abort(401)
+    validate_login()
     user_id = session['user_id']
     fields = ('city', 'street', 'houseNum')
     check_required(fields)
@@ -146,8 +142,7 @@ def send_order(cart_id):
     cart_products = get_cart_products(cart_id)
     if len(cart_products) == 0:
         abort(400, description=f'Cart {cart_id} is empty')
-    if int(houseNum) <= 0:
-        abort(400, description='Invalid house num')
+    validate_positive(houseNum, 'House number')
     if cart_in_order(cart_id):
         abort(401, description=f'Cart {cart_id} is associated with an existing order')
     if get_active_cart_by_user_id(user_id) != cart_id:
