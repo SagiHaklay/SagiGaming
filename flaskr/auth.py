@@ -1,12 +1,12 @@
 from flask import (
     Blueprint, request, abort, session, url_for, current_app, render_template_string
 )
-from flaskr.db import db
+
 from flaskr.database.users import get_user_by_email, set_password, add_user, get_user_by_email_and_password, get_user_by_id
 from flask_mailman import EmailMessage
 from itsdangerous import URLSafeTimedSerializer, BadSignature, SignatureExpired
 from flaskr.templates.reset_password_email_content import reset_password_email_html_content
-from validation import check_required, get_fields_from_request, validate_email, validate_phone
+from flaskr.validation import check_required, get_fields_from_request, validate_email, validate_phone
 
 bp = Blueprint('auth', __name__, url_prefix='/auth')
 
@@ -24,7 +24,9 @@ def register():
     if get_user_by_email(email) is not None:
         abort(400, description='Email is already used by an existing user')
     add_user(first_name, last_name, email, phone, password)
-    return 'Register success!'
+    return {
+        'message': 'Register success!'
+    }
 
 @bp.route('/login', methods=('POST',))
 def login():
@@ -44,7 +46,9 @@ def login():
 @bp.route('/logout', methods=('GET', 'POST'))
 def logout():
     session.clear()
-    return 'Logout success!'
+    return {
+        'message': 'Logout success!'
+    }
 
 
 @bp.route('/password_reset', methods=('POST',))
@@ -62,7 +66,9 @@ def send_reset_password_email():
     email_msg = EmailMessage(subject='Reset Password', body=email_body, to=[email])
     email_msg.content_subtype = 'html'
     email_msg.send()
-    return 'Message sent'
+    return {
+        'message': 'Message sent'
+    }
 
 @bp.route('/password_reset/<token>/<int:user_id>', methods=('POST',))
 def reset_password(token, user_id):
@@ -78,4 +84,6 @@ def reset_password(token, user_id):
         abort(401, description='Invalid token')
     password = request.form['password']
     set_password(user_id, password)
-    return 'Password reset success!'
+    return {
+        'message': 'Password reset success!'
+    }

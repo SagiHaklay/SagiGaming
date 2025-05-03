@@ -1,11 +1,9 @@
 from flask import (
     Blueprint, request, abort
 )
-from flaskr.db import db
-from flaskr.database.users import get_user_by_email, set_password, update_user, set_active_cart_id
-from flaskr.database.carts import set_as_user_cart
-from flaskr.cart import get_cart
-from validation import check_required, get_fields_from_request, validate_user_login, validate_email, validate_phone
+from flaskr.database.users import get_user_by_email, set_password, update_user, set_active_cart_id, get_user_by_id
+from flaskr.database.carts import set_as_user_cart, get_cart
+from flaskr.validation import check_required, get_fields_from_request, validate_user_login, validate_email, validate_phone
 
 bp = Blueprint('user', __name__, url_prefix='/user')
 
@@ -17,16 +15,11 @@ def edit_profile(id):
     first_name, last_name, email, phone = get_fields_from_request(required_fields)
     validate_email(email)
     validate_phone(phone)
-    user = get_user_by_email(email)
-    if user is not None and user['Id'] != id:
+    same_email_user = get_user_by_email(email)
+    if same_email_user is not None and same_email_user['Id'] != id:
         abort(400, description='Email is already used by an existing user')
     update_user(first_name, last_name, email, phone, id)
-    return {
-        'FirstName': first_name,
-        'LastName': last_name,
-        'Email': email,
-        'Phone': phone
-    }
+    return get_user_by_id(id)
 
 @bp.route('/<int:id>/cart', methods=('POST',))
 def set_active_cart(id):
@@ -53,4 +46,6 @@ def change_password(id):
     check_required(('password',))
     password = request.form['password']
     set_password(id, password)
-    return 'success'
+    return {
+        'message': 'success!'
+    }

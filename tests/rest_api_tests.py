@@ -2,11 +2,11 @@ import requests
 
 base_url = 'http://127.0.0.1:5000'
 # products
-'''r = requests.get(base_url + '/product')
+r = requests.get(base_url + '/product')
 if r.status_code == 200:
     print(r.json())
 else:
-    print(r.text)'''
+    print(r.text)
 
 
 #cart
@@ -23,20 +23,20 @@ else:
 
 #auth
 r = requests.post(base_url+'/auth/login', data={
-    'email': 'cd@gmail.com',
-    'password': 'password'
+    'email': 'israelisraeli@gmail.com',
+    'password': '1234567890'
 })
 if r.status_code == 200:
     print(r.cookies)
     print(r.json())
 else:
     print(r.text)
-r2 = requests.post(base_url+'/user/5/change_password', data={
-    'password': 'password2'
+r2 = requests.post(base_url+'/product/9/rate', data={
+    'rating': 1
 }, cookies=r.cookies)
 if r2.status_code == 200:
-    print(r2.text)
+    print(r2.json())
 else:
     print(r2.text)
 r3 = requests.post(base_url+'/auth/logout')
-print(r3.text)
+print(r3.json())

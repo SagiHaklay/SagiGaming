@@ -1,12 +1,12 @@
 from flask import (
     Blueprint, request, abort, session
 )
-from flaskr.db import db
+
 from flaskr.products import get_product
 import datetime
 from flaskr.database import orders, users, carts, cart_products
 
-from validation import check_required, validate_login, validate_positive, validate_enough_units_in_stock
+from flaskr.validation import check_required, validate_login, validate_positive, validate_enough_units_in_stock
 
 bp = Blueprint('cart', __name__, url_prefix='/cart')
 
@@ -46,18 +46,17 @@ def add_product_to_cart(cart_id):
         abort(404, description=f'Cart {cart_id} does not exist')
     if get_product_in_cart(cart_id, product_id) is not None:
         abort(400, description=f'Product {product_id} already in Cart {cart_id}')
-        
     validate_positive(quantity, 'Quantity')
-
     prod = get_product(product_id)
     validate_enough_units_in_stock(quantity, prod['UnitsInStock'])
-
     if 'user_id' in session:
         user_id = session['user_id']
         if users.get_active_cart_by_user_id(user_id) != cart_id:
             abort(401, description=f'Cart {cart_id} is not associated with user {user_id}')
     cart_products.add_product_to_cart(product_id, cart_id, quantity, prod["UnitPrice"])
-    return "success"
+    return {
+        'message': 'success!'
+    }
         
 @bp.route('/<int:cart_id>/update', methods=('POST',))
 def update_product_in_cart(cart_id):
@@ -76,7 +75,9 @@ def update_product_in_cart(cart_id):
         if users.get_active_cart_by_user_id(user_id) != cart_id:
             abort(401, description=f'Cart {cart_id} is not associated with user {user_id}')
     cart_products.update_product_in_cart(cart_id, product_id, quantity, prod['UnitPrice'])
-    return "success"
+    return {
+        'message': 'success!'
+    }
 
 @bp.route('/<int:cart_id>/remove', methods=('POST',))
 def remove_product_from_cart(cart_id):
@@ -91,7 +92,9 @@ def remove_product_from_cart(cart_id):
         if users.get_active_cart_by_user_id(user_id) != cart_id:
             abort(401, description=f'Cart {cart_id} is not associated with user {user_id}')
     cart_products.delete_product_from_cart(cart_id, product_id)
-    return "success"
+    return {
+        'message': 'success!'
+    }
 
 @bp.route('/<int:cart_id>/order', methods=('POST',))
 def send_order(cart_id):

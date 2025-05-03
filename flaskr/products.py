@@ -1,8 +1,7 @@
 from flask import (
     Blueprint, request, abort, session
 )
-from flaskr.db import db
-from validation import validate_login, validate_rating, check_required
+from flaskr.validation import validate_login, validate_rating, check_required
 from flaskr.database import products, categories, manufacturers, models, ratings
 
 bp = Blueprint('products', __name__, url_prefix='/product')
