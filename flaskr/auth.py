@@ -1,5 +1,5 @@
 from flask import (
-    Blueprint, request, abort, session, url_for, current_app, render_template_string
+    Blueprint, request, abort, session, url_for, current_app, render_template_string, jsonify
 )
 
 from flaskr.database.users import get_user_by_email, set_password, add_user, get_user_by_email_and_password, get_user_by_id
@@ -36,7 +36,7 @@ def login():
     user = get_user_by_email_and_password(email, password)
     if user:
         #session.clear()
-        session['user_id'] = user['Id']
+        session['user_id'] = user['id']
         #print(session)
         return user
     abort(401)

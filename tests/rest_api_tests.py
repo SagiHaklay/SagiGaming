@@ -31,12 +31,12 @@ if r.status_code == 200:
     print(r.json())
 else:
     print(r.text)
-r2 = requests.post(base_url+'/product/9/rate', data={
+'''r2 = requests.post(base_url+'/product/9/rate', data={
     'rating': 1
 }, cookies=r.cookies)
 if r2.status_code == 200:
     print(r2.json())
 else:
-    print(r2.text)
+    print(r2.text)'''
 r3 = requests.post(base_url+'/auth/logout')
 print(r3.json())

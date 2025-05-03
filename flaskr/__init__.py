@@ -14,6 +14,8 @@ def create_app(test_config=None):
     app.config['MYSQL_PASSWORD'] = 'Mysqlpassword42!'
     app.config['MYSQL_DB'] = 'sagigaming'
 
+    app.config["SQLALCHEMY_DATABASE_URI"] = "mysql+mysqldb://root:Mysqlpassword42!@localhost/sagigaming"
+
     if test_config is None:
         # load the instance config, if it exists, when not testing
         app.config.from_pyfile('config.py', silent=True)
