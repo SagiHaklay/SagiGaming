@@ -1,7 +1,18 @@
-from flaskr.db import db
+from flaskr.db import db, orm_db
+from sqlalchemy import Integer, select, Float
+from sqlalchemy.orm import Mapped, mapped_column
+from flaskr.database.products import Product
+
+class CartProduct(orm_db.Model):
+    __tablename__ = "cart_products"
+
+    product_id: Mapped[int] = mapped_column('ProductId', Integer, primary_key=True)
+    cart_id: Mapped[int] = mapped_column('CartId', Integer, primary_key=True)
+    quantity: Mapped[int] = mapped_column('Quantity', Integer)
+    unit_price: Mapped[float] = mapped_column('UnitPrice', Float)
 
 def get_cart_products_by_cart_id(cart_id):
-    cursor = db.connection.cursor()
+    '''cursor = db.connection.cursor()
     # Get for each product in cart id, name, image, CURRENT unit price and quantity
     cursor.execute('SELECT ProductId, P.Name, P.UnitPrice, P.Image, Quantity, P.UnitsInStock FROM cart_products AS C JOIN products AS P ON C.ProductId = P.Id WHERE CartId = %s', (cart_id,))
     result = cursor.fetchall()
@@ -13,29 +24,64 @@ def get_cart_products_by_cart_id(cart_id):
         "Image": prod[3],
         "Quantity": prod[4],
         "UnitsInStock": prod[5]
-    } for prod in result]
+    } for prod in result]'''
+    query = select(
+            Product.id, Product.name, Product.unit_price, Product.image, CartProduct.quantity, Product.units_in_stock
+        ).join(
+            Product, CartProduct.product_id == Product.id, isouter=True
+        ).where(CartProduct.cart_id == cart_id)
+    products = orm_db.session.execute(query)
+    return [{
+        "Id": prod.id,
+        "Name": prod.name,
+        "UnitPrice": prod.unit_price,
+        "Image": prod.image,
+        "Quantity": prod.quantity,
+        "UnitsInStock": prod.units_in_stock
+    } for prod in products]
 
 def get_product_in_cart(product_id, cart_id):
-    cursor = db.connection.cursor()
+    '''cursor = db.connection.cursor()
     cursor.execute('SELECT ProductId FROM cart_products WHERE CartId = %s AND ProductId = %s', (cart_id, product_id))
     result = cursor.fetchone()
     cursor.close()
-    return result
+    return result'''
+    prod = orm_db.session.execute(select(CartProduct).where(CartProduct.cart_id == cart_id and CartProduct.product_id == product_id)).scalar()
+    if prod is None:
+        return None
+    return prod
 
 def add_product_to_cart(product_id, cart_id, quantity, unit_price):
-    cursor = db.connection.cursor()
+    '''cursor = db.connection.cursor()
     cursor.execute("INSERT INTO cart_products (ProductId, CartId, Quantity, UnitPrice) VALUES (%s, %s, %s, %s)", (product_id, cart_id, quantity, unit_price))
     db.connection.commit()
-    cursor.close()
+    cursor.close()'''
+    cart_product = CartProduct(
+        product_id=product_id,
+        cart_id=cart_id,
+        quantity=quantity,
+        unit_price=unit_price
+    )
+    orm_db.session.add(cart_product)
+    orm_db.session.commit()
 
 def update_product_in_cart(cart_id, product_id, quantity, unit_price):
-    cursor = db.connection.cursor()
+    '''cursor = db.connection.cursor()
     cursor.execute("UPDATE cart_products SET Quantity = %s, UnitPrice = %s WHERE CartId = %s AND ProductId = %s", (quantity, unit_price, cart_id, product_id))
     db.connection.commit()
-    cursor.close()
+    cursor.close()'''
+    cart_product = get_product_in_cart(product_id, cart_id)
+    if cart_product is not None:
+        cart_product.quantity = quantity
+        cart_product.unit_price = unit_price
+        orm_db.session.commit()
 
 def delete_product_from_cart(cart_id, product_id):
-    cursor = db.connection.cursor()
+    '''cursor = db.connection.cursor()
     cursor.execute("DELETE FROM cart_products WHERE CartId = %s AND ProductId = %s", (cart_id, product_id))
     db.connection.commit()
-    cursor.close()
+    cursor.close()'''
+    cart_product = get_product_in_cart(product_id, cart_id)
+    if cart_product is not None:
+        orm_db.session.delete(cart_product)
+        orm_db.session.commit()

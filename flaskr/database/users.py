@@ -49,7 +49,10 @@ def get_user_by_email_and_password(email, password):
         'Password': user[5],
         'ActiveCartId': user[6]
     }'''
-    return orm_db.session.execute(select(User).where(User.email == email and User.password == password)).scalar().to_dict()
+    user = orm_db.session.execute(select(User).where(User.email == email and User.password == password)).scalar()
+    if user is None:
+        return None
+    return user.to_dict()
 
 def get_user_by_email(email):
     '''cursor = db.connection.cursor()
@@ -85,7 +88,10 @@ def get_user_by_id(id):
         'Password': user[5],
         'ActiveCartId': user[6]
     }'''
-    return orm_db.session.get(User, id).to_dict()
+    user = orm_db.session.get(User, id)
+    if user is None:
+        return None
+    return user.to_dict()
 
 def set_password(user_id, password):
     '''cursor = db.connection.cursor()
@@ -127,4 +133,6 @@ def get_active_cart_by_user_id(user_id):
     cursor.close()
     return user[0] if user is not None else None'''
     user = orm_db.session.get(User, user_id)
-    return user.active_cart_id if user is not None else None
+    if user is None:
+        return None
+    return user.active_cart_id
