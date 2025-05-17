@@ -1,10 +1,11 @@
-from flaskr.db import db, orm_db
+from flaskr.db import db, orm_db, DBQueryError, DBConnectionError, DBError, handle_db_exceptions
 from flaskr.database import cart_products
 from sqlalchemy import Integer, String, select, DateTime, Enum
 from sqlalchemy.orm import Mapped, mapped_column
 import enum
 from flaskr.database.users import User
 from flaskr.database.products import Product
+from sqlalchemy.exc import SQLAlchemyError, StatementError, TimeoutError
 
 class OrderStatus(enum.Enum):
     pending = 1
@@ -23,6 +24,7 @@ class Order(orm_db.Model):
     house_number: Mapped[int] = mapped_column('HouseNum', Integer)
     status: Mapped[OrderStatus] = mapped_column('Status', Enum(OrderStatus))
 
+@handle_db_exceptions
 def add_order(cart_id, user_id, date, city, street, houseNum):
     cart_prods = cart_products.get_cart_products_by_cart_id(cart_id)
     '''cursor = db.connection.cursor()
@@ -48,20 +50,31 @@ def add_order(cart_id, user_id, date, city, street, houseNum):
         house_number=houseNum,
         status=OrderStatus.pending
     )
-    orm_db.session.add(order)
-    user = orm_db.session.get(User, user_id)
-    user.active_cart_id = None
-    for cart_prod in cart_prods:
-        product = orm_db.session.get(Product, cart_prod['Id'])
-        if product is not None:
-            product.units_in_stock -= cart_prod['quantity']
-    orm_db.session.commit()
+    try:
+        orm_db.session.add(order)
+        user = orm_db.session.get(User, user_id)
+        user.active_cart_id = None
+        for cart_prod in cart_prods:
+            product = orm_db.session.get(Product, cart_prod['Id'])
+            if product is not None:
+                product.units_in_stock -= cart_prod['Quantity']
+    except TimeoutError:
+        orm_db.session.rollback()
+        raise DBConnectionError()
+    except StatementError as err:
+        orm_db.session.rollback()
+        raise DBQueryError(err.statement, err.params)
+    except SQLAlchemyError:
+        orm_db.session.rollback()
+        raise DBError()
+    else:
+        orm_db.session.commit()
     return {
         'OrderId': order.id,
         'Status': order.status
     }
     
-
+@handle_db_exceptions
 def cart_in_order(cart_id):
     '''cursor = db.connection.cursor()
     cursor.execute('SELECT Id FROM orders WHERE CartId = %s', (cart_id,))
@@ -70,3 +83,4 @@ def cart_in_order(cart_id):
     return order is not None'''
     order = orm_db.session.scalar(select(Order).where(Order.cart_id == cart_id))
     return order is not None
+    

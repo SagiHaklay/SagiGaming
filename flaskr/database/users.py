@@ -49,7 +49,7 @@ def get_user_by_email_and_password(email, password):
         'Password': user[5],
         'ActiveCartId': user[6]
     }'''
-    user = orm_db.session.execute(select(User).where(User.email == email and User.password == password)).scalar()
+    user = orm_db.session.execute(select(User).where(User.email == email).where(User.password == password)).scalar()
     if user is None:
         return None
     return user.to_dict()
