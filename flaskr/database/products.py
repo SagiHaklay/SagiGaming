@@ -1,4 +1,4 @@
-from flaskr.db import db, orm_db
+from flaskr.db import db, orm_db, handle_db_exceptions
 from sqlalchemy import Integer, String, Float, select, func
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy_serializer import SerializerMixin
@@ -19,6 +19,7 @@ class Product(orm_db.Model, SerializerMixin):
     technical_details: Mapped[str] = mapped_column('TechnicalDetails', String(45))
     other_details: Mapped[str] = mapped_column('OtherDetails', String(45))
 
+@handle_db_exceptions
 def get_products(category_id, manufacturer_id, model_id):
     '''filters = []
     if category_id:
@@ -60,6 +61,7 @@ def get_products(category_id, manufacturer_id, model_id):
         "Rating": prod.avgRating
     } for prod in products]
 
+@handle_db_exceptions
 def get_product(id):
     '''cursor = db.connection.cursor()
     cursor.execute('SELECT * FROM products WHERE Id = %s', (id,))

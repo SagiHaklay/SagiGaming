@@ -1,5 +1,5 @@
-from flaskr.db import db, orm_db
-from sqlalchemy import Integer, String, select, DateTime, Boolean
+from flaskr.db import db, orm_db, handle_db_exceptions, DBQueryError
+from sqlalchemy import Integer, DateTime, Boolean
 from sqlalchemy.orm import Mapped, mapped_column
 
 class Cart(orm_db.Model):
@@ -9,6 +9,7 @@ class Cart(orm_db.Model):
     is_guest_cart: Mapped[bool] = mapped_column('IsGuestCart', Boolean)
     created_at: Mapped[DateTime] = mapped_column('CreatedAt', DateTime)
 
+@handle_db_exceptions
 def get_cart(id):
     '''cursor = db.connection.cursor()
     cursor.execute('SELECT * FROM carts WHERE Id = %s', (id,))
@@ -16,10 +17,16 @@ def get_cart(id):
     cursor.close()
     return result'''
     cart = orm_db.session.get(Cart, id)
-    if cart is None:
-        return None
+    
     return cart
 
+def get_cart_or_error(id):
+    cart = get_cart(id)
+    if cart is None:
+        raise DBQueryError(f'select * from carts where Id = {id}')
+    return cart
+
+@handle_db_exceptions
 def add_new_cart(date, is_guest):
     '''cursor = db.connection.cursor()
     if not is_guest:
@@ -39,12 +46,13 @@ def add_new_cart(date, is_guest):
     orm_db.session.commit()
     return cart.id
 
+@handle_db_exceptions
 def set_as_user_cart(cart_id):
     '''cursor = db.connection.cursor()
     cursor.execute('UPDATE carts SET IsGuestCart = 0 WHERE Id = %s', (cart_id,))
     db.connection.commit()
     cursor.close()'''
-    cart = get_cart(cart_id)
-    if cart is not None:
-        cart.is_guest_cart = False
-        orm_db.session.commit()
+    cart = get_cart_or_error(cart_id)
+    
+    cart.is_guest_cart = False
+    orm_db.session.commit()

@@ -1,5 +1,5 @@
 
-from flaskr.db import db, orm_db
+from flaskr.db import db, orm_db, handle_db_exceptions
 from sqlalchemy import Integer, String, select
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy_serializer import SerializerMixin
@@ -16,7 +16,7 @@ class User(orm_db.Model, SerializerMixin):
     active_cart_id: Mapped[int] = mapped_column("ActiveCartId", Integer)
 
 
-
+@handle_db_exceptions
 def add_user(first_name, last_name, email, phone, password):
     '''cursor = db.connection.cursor()
     cursor.execute('INSERT INTO users (FirstName, LastName, Email, Phone, Password) VALUES (%s, %s, %s, %s, %s)', (first_name, last_name, email, phone, password))
@@ -33,6 +33,7 @@ def add_user(first_name, last_name, email, phone, password):
     orm_db.session.commit()
     return user.to_dict()
 
+@handle_db_exceptions
 def get_user_by_email_and_password(email, password):
     '''cursor = db.connection.cursor()
     cursor.execute('SELECT * FROM users WHERE Email = %s AND Password = %s', (email, password))
@@ -54,6 +55,7 @@ def get_user_by_email_and_password(email, password):
         return None
     return user.to_dict()
 
+@handle_db_exceptions
 def get_user_by_email(email):
     '''cursor = db.connection.cursor()
     cursor.execute('SELECT * FROM users WHERE email = %s', (email,))
@@ -70,8 +72,12 @@ def get_user_by_email(email):
         'Password': user[5],
         'ActiveCartId': user[6]
     }'''
-    return orm_db.session.execute(select(User).where(User.email == email)).scalar().to_dict()
+    user = orm_db.session.execute(select(User).where(User.email == email)).scalar()
+    if user is None:
+        return None
+    return user.to_dict()
 
+@handle_db_exceptions
 def get_user_by_id(id):
     '''cursor = db.connection.cursor()
     cursor.execute('SELECT * FROM users WHERE Id = %s', (id,))
@@ -93,6 +99,7 @@ def get_user_by_id(id):
         return None
     return user.to_dict()
 
+@handle_db_exceptions
 def set_password(user_id, password):
     '''cursor = db.connection.cursor()
     cursor.execute('UPDATE users SET Password = %s WHERE Id = %s', (password, user_id))
@@ -102,6 +109,7 @@ def set_password(user_id, password):
     user.password = password
     orm_db.session.commit()
 
+@handle_db_exceptions
 def update_user(first_name, last_name, email, phone, id):
     '''cursor = db.connection.cursor()
     cursor.execute('UPDATE users SET FirstName = %s, LastName = %s, Email = %s, Phone = %s WHERE Id = %s', (first_name, last_name, email, phone, id))
@@ -114,6 +122,7 @@ def update_user(first_name, last_name, email, phone, id):
     user.phone = phone
     orm_db.session.commit()
 
+@handle_db_exceptions
 def set_active_cart_id(cart_id, id):
     '''cursor = db.connection.cursor()
     if cart_id is None:
@@ -126,6 +135,7 @@ def set_active_cart_id(cart_id, id):
     user.active_cart_id = cart_id
     orm_db.session.commit()
 
+@handle_db_exceptions
 def get_active_cart_by_user_id(user_id):
     '''cursor = db.connection.cursor()
     cursor.execute('SELECT ActiveCartId FROM users WHERE Id = %s', (user_id,))

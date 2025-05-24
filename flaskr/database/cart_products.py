@@ -6,8 +6,8 @@ from flaskr.database.products import Product
 class CartProduct(orm_db.Model):
     __tablename__ = "cart_products"
 
-    product_id: Mapped[int] = mapped_column('ProductId', Integer, primary_key=True)
-    cart_id: Mapped[int] = mapped_column('CartId', Integer, primary_key=True)
+    product_id: Mapped[int] = mapped_column('ProductId', Integer, primary_key=True, nullable=False)
+    cart_id: Mapped[int] = mapped_column('CartId', Integer, primary_key=True, nullable=False)
     quantity: Mapped[int] = mapped_column('Quantity', Integer)
     unit_price: Mapped[float] = mapped_column('UnitPrice', Float)
 
@@ -49,9 +49,14 @@ def get_product_in_cart(product_id, cart_id):
     cursor.close()
     return result'''
     prod = orm_db.session.execute(select(CartProduct).where(CartProduct.cart_id == cart_id).where(CartProduct.product_id == product_id)).scalar()
-    if prod is None:
-        return None
+    
     return prod
+
+def get_product_in_cart_or_error(product_id, cart_id):
+    product = get_product_in_cart(product_id, cart_id)
+    if product is None:
+        raise DBQueryError(f'select * from cart_products where CartId={cart_id} and ProductId={product_id}')
+    return product
 
 @handle_db_exceptions
 def add_product_to_cart(product_id, cart_id, quantity, unit_price=None):
@@ -77,14 +82,13 @@ def update_product_in_cart(cart_id, product_id, quantity, unit_price=None):
     cursor.execute("UPDATE cart_products SET Quantity = %s, UnitPrice = %s WHERE CartId = %s AND ProductId = %s", (quantity, unit_price, cart_id, product_id))
     db.connection.commit()
     cursor.close()'''
-    cart_product = get_product_in_cart(product_id, cart_id)
-    if cart_product is not None:
-        cart_product.quantity = quantity
-        if unit_price is not None:
-            cart_product.unit_price = unit_price
-        orm_db.session.commit()
-    else:
-        raise DBQueryError(f'select * from cart_products where CartId={cart_id} and ProductId={product_id}')
+    cart_product = get_product_in_cart_or_error(product_id, cart_id)
+    
+    cart_product.quantity = quantity
+    if unit_price is not None:
+        cart_product.unit_price = unit_price
+    orm_db.session.commit()
+    
 
 @handle_db_exceptions
 def delete_product_from_cart(cart_id, product_id):
@@ -92,10 +96,8 @@ def delete_product_from_cart(cart_id, product_id):
     cursor.execute("DELETE FROM cart_products WHERE CartId = %s AND ProductId = %s", (cart_id, product_id))
     db.connection.commit()
     cursor.close()'''
-    cart_product = get_product_in_cart(product_id, cart_id)
-    #print(cart_product)
-    if cart_product is not None:
-        orm_db.session.delete(cart_product)
-        orm_db.session.commit()
-    else:
-        raise DBQueryError(f'select * from cart_products where CartId={cart_id} and ProductId={product_id}')
+    cart_product = get_product_in_cart_or_error(product_id, cart_id)
+    
+    orm_db.session.delete(cart_product)
+    orm_db.session.commit()
+    

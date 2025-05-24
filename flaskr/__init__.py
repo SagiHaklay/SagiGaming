@@ -1,6 +1,6 @@
 import os
 
-from flask import Flask
+from flask import Flask, jsonify
 
 
 def create_app(test_config=None):
@@ -43,5 +43,10 @@ def create_app(test_config=None):
     app.register_blueprint(auth.bp)
     from . import user
     app.register_blueprint(user.bp)
+
+    @app.errorhandler(db.DBError)
+    def handle_db_error(error):
+        return jsonify(error.to_dict()), 500
+    
 
     return app

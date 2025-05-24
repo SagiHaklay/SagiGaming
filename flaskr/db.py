@@ -1,7 +1,7 @@
 from flask_mysqldb import MySQL
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import DeclarativeBase
-from sqlalchemy.exc import SQLAlchemyError, StatementError, TimeoutError
+from sqlalchemy.exc import SQLAlchemyError, StatementError, TimeoutError, OperationalError, DisconnectionError
 
 class Base(DeclarativeBase):
     pass
@@ -17,24 +17,41 @@ class DBError(Exception):
     def __init__(self, *args):
         super().__init__(*args)
 
-class DBConnectionError(Exception):
+    def to_dict(self):
+        return {'message': 'Internal Database Error!'}
+
+class DBConnectionError(DBError):
     def __init__(self, *args):
         super().__init__(*args)
 
-class DBQueryError(Exception):
+    def to_dict(self):
+        result = super().to_dict()
+        result['message'] = 'Database Connection Error!'
+        return result
+
+class DBQueryError(DBError):
     def __init__(self, query, params=None, *args):
         super().__init__(*args)
         self.query = query
         self.params = params
 
+    def to_dict(self):
+        result = super().to_dict()
+        result['message'] = 'Database Query Error!'
+        result['query'] = self.query
+        result['params'] = self.params
+        return result
+
 def handle_db_exceptions(func):
-    def wrap():
+    def wrap(*args, **kwargs):
         try:
-            func()
-        except TimeoutError:
+            result = func(*args, **kwargs)
+        except (TimeoutError, OperationalError, DisconnectionError):
             raise DBConnectionError()
         except StatementError as err:
             raise DBQueryError(err.statement, err.params)
         except SQLAlchemyError:
             raise DBError()
+        else:
+            return result
     return wrap

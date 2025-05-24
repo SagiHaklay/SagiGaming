@@ -1,4 +1,4 @@
-from flaskr.db import db, orm_db
+from flaskr.db import db, orm_db, handle_db_exceptions
 from sqlalchemy import Integer, String, select
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy_serializer import SerializerMixin
@@ -10,6 +10,7 @@ class Manufacturer(orm_db.Model, SerializerMixin):
     name: Mapped[String] = mapped_column('Name', String(45))
     logo: Mapped[String] = mapped_column('Logo', String(45))
 
+@handle_db_exceptions
 def get_manufacturers():
     '''cursor = db.connection.cursor()
     cursor.execute('SELECT * FROM manufacturers')
@@ -23,6 +24,7 @@ def get_manufacturers():
     manufacturers = orm_db.session.execute(select(Manufacturer)).scalars()
     return [m.to_dict() for m in manufacturers]
 
+@handle_db_exceptions
 def get_manufacturer(id):
     '''cursor = db.connection.cursor()
     cursor.execute('SELECT * FROM manufacturers WHERE Id = %s', (id,))
