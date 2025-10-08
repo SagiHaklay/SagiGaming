@@ -3,6 +3,7 @@ from flaskr.db import db, orm_db, handle_db_exceptions
 from sqlalchemy import Integer, String, select
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy_serializer import SerializerMixin
+from werkzeug.security import generate_password_hash, check_password_hash
 
 class User(orm_db.Model, SerializerMixin):
     __tablename__ = "users"
@@ -12,7 +13,7 @@ class User(orm_db.Model, SerializerMixin):
     lastname: Mapped[str] = mapped_column("LastName", String(45))
     email: Mapped[str] = mapped_column("Email", String(45), nullable=False)
     phone: Mapped[str] = mapped_column("Phone", String(10))
-    password: Mapped[str] = mapped_column("Password", String(45), nullable=False)
+    password: Mapped[str] = mapped_column("Password", String(162), nullable=False)
     active_cart_id: Mapped[int] = mapped_column("ActiveCartId", Integer)
 
 
@@ -27,7 +28,7 @@ def add_user(first_name, last_name, email, phone, password):
         lastname=last_name,
         email=email,
         phone=phone,
-        password=password
+        password=generate_password_hash(password)
     )
     orm_db.session.add(user)
     orm_db.session.commit()
@@ -50,8 +51,10 @@ def get_user_by_email_and_password(email, password):
         'Password': user[5],
         'ActiveCartId': user[6]
     }'''
-    user = orm_db.session.execute(select(User).where(User.email == email).where(User.password == password)).scalar()
+    user = orm_db.session.execute(select(User).where(User.email == email)).scalar()
     if user is None:
+        return None
+    if user.password != password and not check_password_hash(user.password, password):
         return None
     return user.to_dict()
 
