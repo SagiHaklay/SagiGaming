@@ -2,7 +2,7 @@ from flask import (
     Blueprint, request, abort, session, jsonify
 )
 from flaskr.validation import validate_login, validate_rating, check_required
-from flaskr.database import products, categories, manufacturers, models, ratings
+from flaskr.repositories import products, categories, manufacturers, models, ratings
 from flaskr.response import RatingResponse
 
 bp = Blueprint('products', __name__, url_prefix='/product')

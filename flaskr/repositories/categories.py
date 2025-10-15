@@ -1,14 +1,6 @@
-from flaskr.db import db, orm_db, handle_db_exceptions
-from sqlalchemy import Integer, String, select
-from sqlalchemy.orm import Mapped, mapped_column
-from sqlalchemy_serializer import SerializerMixin
-
-class ProductCategory(orm_db.Model, SerializerMixin):
-    __tablename__ = "categories"
-
-    id: Mapped[int] = mapped_column('Id', Integer, primary_key=True)
-    name: Mapped[String] = mapped_column('Name', String(45))
-    image: Mapped[String] = mapped_column('Image', String(45))
+from flaskr.db import orm_db, handle_db_exceptions
+from sqlalchemy import select
+from flaskr.models.product_category import ProductCategory
 
 @handle_db_exceptions
 def get_categories():

@@ -1,13 +1,5 @@
 from flaskr.db import db, orm_db, handle_db_exceptions, DBQueryError
-from sqlalchemy import Integer, DateTime, Boolean
-from sqlalchemy.orm import Mapped, mapped_column
-
-class Cart(orm_db.Model):
-    __tablename__ = "carts"
-
-    id: Mapped[int] = mapped_column('Id', Integer, primary_key=True)
-    is_guest_cart: Mapped[bool] = mapped_column('IsGuestCart', Boolean)
-    created_at: Mapped[DateTime] = mapped_column('CreatedAt', DateTime)
+from flaskr.models.cart import Cart
 
 @handle_db_exceptions
 def get_cart(id):

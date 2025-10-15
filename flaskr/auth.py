@@ -2,7 +2,7 @@ from flask import (
     Blueprint, request, abort, session, url_for, current_app, render_template_string, jsonify
 )
 
-from flaskr.database.users import get_user_by_email, set_password, add_user, get_user_by_email_and_password, get_user_by_id
+from flaskr.repositories.users import get_user_by_email, set_password, add_user, get_user_by_email_and_password, get_user_by_id
 from flask_mailman import EmailMessage
 from itsdangerous import URLSafeTimedSerializer, BadSignature, SignatureExpired
 from flaskr.templates.reset_password_email_content import reset_password_email_html_content

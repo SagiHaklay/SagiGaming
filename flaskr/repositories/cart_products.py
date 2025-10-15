@@ -1,15 +1,7 @@
-from flaskr.db import db, orm_db, handle_db_exceptions, DBQueryError
-from sqlalchemy import Integer, select, Float
-from sqlalchemy.orm import Mapped, mapped_column
-from flaskr.database.products import Product
-
-class CartProduct(orm_db.Model):
-    __tablename__ = "cart_products"
-
-    product_id: Mapped[int] = mapped_column('ProductId', Integer, primary_key=True, nullable=False)
-    cart_id: Mapped[int] = mapped_column('CartId', Integer, primary_key=True, nullable=False)
-    quantity: Mapped[int] = mapped_column('Quantity', Integer)
-    unit_price: Mapped[float] = mapped_column('UnitPrice', Float)
+from flaskr.db import orm_db, handle_db_exceptions, DBQueryError
+from sqlalchemy import select
+from flaskr.models.product import Product
+from flaskr.models.cart_product import CartProduct
 
 @handle_db_exceptions
 def get_cart_products_by_cart_id(cart_id):

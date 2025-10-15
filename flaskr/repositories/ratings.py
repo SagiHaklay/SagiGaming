@@ -1,14 +1,6 @@
-from flaskr.db import db, orm_db, handle_db_exceptions
-from sqlalchemy import Integer, select, func
-from sqlalchemy.orm import Mapped, mapped_column
-from sqlalchemy_serializer import SerializerMixin
-
-class ProductRating(orm_db.Model, SerializerMixin):
-    __tablename__ = "ratings"
-
-    user_id: Mapped[int] = mapped_column('UserId', Integer, primary_key=True)
-    product_id: Mapped[int] = mapped_column('ProductId', Integer, primary_key=True)
-    rating: Mapped[int] = mapped_column('rating', Integer)
+from flaskr.db import orm_db, handle_db_exceptions
+from sqlalchemy import select, func
+from flaskr.models.product_rating import ProductRating
 
 @handle_db_exceptions
 def get_rating(user_id, product_id):

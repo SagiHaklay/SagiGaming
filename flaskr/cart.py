@@ -4,7 +4,7 @@ from flask import (
 
 from flaskr.products import get_product
 import datetime
-from flaskr.database import orders, users, carts, cart_products
+from flaskr.repositories import orders, users, carts, cart_products
 
 from flaskr.validation import check_required, validate_login, validate_positive, validate_enough_units_in_stock
 from flaskr.response import MessageResponse, CartResponse

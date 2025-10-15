@@ -1,28 +1,10 @@
-from flaskr.db import db, orm_db, DBQueryError, DBConnectionError, DBError, handle_db_exceptions
-from flaskr.database import cart_products
-from sqlalchemy import Integer, String, select, DateTime, Enum
-from sqlalchemy.orm import Mapped, mapped_column
-import enum
-from flaskr.database.users import User
-from flaskr.database.products import Product
+from flaskr.db import orm_db, DBQueryError, DBConnectionError, DBError, handle_db_exceptions
+from flaskr.repositories import cart_products
+from sqlalchemy import select
+from flaskr.repositories.users import User
+from flaskr.repositories.products import Product
 from sqlalchemy.exc import SQLAlchemyError, StatementError, TimeoutError
-
-class OrderStatus(enum.Enum):
-    pending = 1
-    delivered = 2
-    cancelled = 3
-
-class Order(orm_db.Model):
-    __tablename__ = "orders"
-
-    id: Mapped[int] = mapped_column('Id', Integer, primary_key=True)
-    cart_id: Mapped[int] = mapped_column('CartId', Integer)
-    customer_id: Mapped[int] = mapped_column('CustomerId', Integer)
-    order_date: Mapped[DateTime] = mapped_column('OrderDate', DateTime)
-    city: Mapped[str] = mapped_column('City', String(45))
-    street: Mapped[str] = mapped_column('Street', String(45))
-    house_number: Mapped[int] = mapped_column('HouseNum', Integer)
-    status: Mapped[OrderStatus] = mapped_column('Status', Enum(OrderStatus))
+from flaskr.models.order import Order, OrderStatus
 
 @handle_db_exceptions
 def add_order(cart_id, user_id, date, city, street, houseNum):

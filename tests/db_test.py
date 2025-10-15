@@ -1,4 +1,4 @@
-from flaskr.database import users, ratings, products, carts, cart_products, orders
+from flaskr.repositories import users, ratings, products, carts, cart_products, orders
 from flask import Flask
 from flaskr.db import orm_db, DBError, DBConnectionError, DBQueryError
 from datetime import datetime

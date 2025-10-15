@@ -1,8 +1,8 @@
 from flask import (
     Blueprint, request, abort, jsonify
 )
-from flaskr.database.users import get_user_by_email, set_password, update_user, set_active_cart_id, get_user_by_id
-from flaskr.database.carts import set_as_user_cart, get_cart
+from flaskr.repositories.users import get_user_by_email, set_password, update_user, set_active_cart_id, get_user_by_id
+from flaskr.repositories.carts import set_as_user_cart, get_cart
 from flaskr.validation import check_required, get_fields_from_request, validate_user_login, validate_email, validate_phone
 from flaskr.response import MessageResponse, CartResponse
 
