@@ -1,7 +1,8 @@
 import os
 
 from flask import Flask, jsonify
-
+from werkzeug.exceptions import HTTPException
+from flaskr.response import MessageResponse
 
 def create_app():
     app = Flask(__name__)
@@ -25,6 +26,10 @@ def create_app():
     @app.errorhandler(db.DBError)
     def handle_db_error(error):
         return jsonify(error.to_dict()), 500
+
+    @app.errorhandler(HTTPException)
+    def handle_http_error(error: HTTPException):
+        return jsonify(MessageResponse(error.description, False)), error.code
     
 
     return app

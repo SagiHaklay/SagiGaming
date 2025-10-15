@@ -1,9 +1,10 @@
 from flask import (
-    Blueprint, request, abort
+    Blueprint, request, abort, jsonify
 )
 from flaskr.database.users import get_user_by_email, set_password, update_user, set_active_cart_id, get_user_by_id
 from flaskr.database.carts import set_as_user_cart, get_cart
 from flaskr.validation import check_required, get_fields_from_request, validate_user_login, validate_email, validate_phone
+from flaskr.response import MessageResponse, CartResponse
 
 bp = Blueprint('user', __name__, url_prefix='/user')
 
@@ -30,15 +31,13 @@ def set_active_cart(id):
     if cart is None:
         abort(404, description=f"Cart {cart_id} not found")
     # check if cart is not a guest cart
-    if not cart[1]:
+    if not cart.is_guest_cart:
         abort(400, description=f"Cart {cart_id} already belongs to a user")
     
     set_active_cart_id(cart_id, id)
     # set the cart's IsGuestCart field to false
     set_as_user_cart(cart_id)
-    return {
-        'ActiveCartId': cart_id
-    }
+    return jsonify(CartResponse(cart_id, id))
 
 @bp.route('/<int:id>/change_password', methods=('POST',))
 def change_password(id):
@@ -46,6 +45,4 @@ def change_password(id):
     check_required(('password',))
     password = request.form['password']
     set_password(id, password)
-    return {
-        'message': 'success!'
-    }
+    return jsonify(MessageResponse('Password changed successfully'))

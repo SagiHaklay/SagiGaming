@@ -7,6 +7,7 @@ from flask_mailman import EmailMessage
 from itsdangerous import URLSafeTimedSerializer, BadSignature, SignatureExpired
 from flaskr.templates.reset_password_email_content import reset_password_email_html_content
 from flaskr.validation import check_required, get_fields_from_request, validate_email, validate_phone
+from flaskr.response import MessageResponse
 
 bp = Blueprint('auth', __name__, url_prefix='/auth')
 
@@ -24,9 +25,7 @@ def register():
     if get_user_by_email(email) is not None:
         abort(400, description='Email is already used by an existing user')
     add_user(first_name, last_name, email, phone, password)
-    return {
-        'message': 'Register success!'
-    }
+    return jsonify(MessageResponse('Register success'))
 
 @bp.route('/login', methods=('POST',))
 def login():
@@ -35,9 +34,7 @@ def login():
     password = request.form['password']
     user = get_user_by_email_and_password(email, password)
     if user:
-        #session.clear()
         session['user_id'] = user['id']
-        #print(session)
         return user
     abort(401)
 
@@ -46,9 +43,7 @@ def login():
 @bp.route('/logout', methods=('GET', 'POST'))
 def logout():
     session.clear()
-    return {
-        'message': 'Logout success!'
-    }
+    return jsonify(MessageResponse('Logout success'))
 
 
 @bp.route('/password_reset', methods=('POST',))
@@ -66,9 +61,7 @@ def send_reset_password_email():
     email_msg = EmailMessage(subject='Reset Password', body=email_body, to=[email])
     email_msg.content_subtype = 'html'
     email_msg.send()
-    return {
-        'message': 'Message sent'
-    }
+    return jsonify(MessageResponse('Message sent'))
 
 @bp.route('/password_reset/<token>/<int:user_id>', methods=('POST',))
 def reset_password(token, user_id):
@@ -84,6 +77,4 @@ def reset_password(token, user_id):
         abort(401, description='Invalid token')
     password = request.form['password']
     set_password(user_id, password)
-    return {
-        'message': 'Password reset success!'
-    }
+    return jsonify(MessageResponse('Password reset successsfully'))
