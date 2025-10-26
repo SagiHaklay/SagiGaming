@@ -8,7 +8,7 @@ from flaskr.response import MessageResponse, CartResponse
 
 bp = Blueprint('user', __name__, url_prefix='/user')
 
-@bp.route('/<int:id>/edit', methods=('POST',))
+@bp.route('/<int:id>/edit', methods=('PUT',))
 def edit_profile(id):
     validate_user_login(id)
     required_fields = ('firstName', 'lastName', 'email', 'phone')
@@ -17,7 +17,7 @@ def edit_profile(id):
     validate_email(email)
     validate_phone(phone)
     same_email_user = get_user_by_email(email)
-    if same_email_user is not None and same_email_user['Id'] != id:
+    if same_email_user is not None and same_email_user['id'] != id:
         abort(400, description='Email is already used by an existing user')
     update_user(first_name, last_name, email, phone, id)
     current_app.logger.info('User account %d updated.', id)

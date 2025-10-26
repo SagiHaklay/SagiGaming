@@ -37,9 +37,9 @@ def add_order(cart_id, user_id, date, city, street, houseNum):
         user = orm_db.session.get(User, user_id)
         user.active_cart_id = None
         for cart_prod in cart_prods:
-            product = orm_db.session.get(Product, cart_prod['Id'])
+            product = orm_db.session.get(Product, cart_prod['id'])
             if product is not None:
-                product.units_in_stock -= cart_prod['Quantity']
+                product.units_in_stock -= cart_prod['quantity']
     except TimeoutError:
         orm_db.session.rollback()
         raise DBConnectionError()
@@ -52,8 +52,8 @@ def add_order(cart_id, user_id, date, city, street, houseNum):
     else:
         orm_db.session.commit()
     return {
-        'OrderId': order.id,
-        'Status': order.status
+        'order_id': order.id,
+        'status': order.status.name
     }
     
 @handle_db_exceptions

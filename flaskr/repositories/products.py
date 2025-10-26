@@ -38,11 +38,11 @@ def get_products(category_id, manufacturer_id, model_id):
         query = query.where(Product.model_id == model_id)
     products = orm_db.session.execute(query)
     return [{
-        "Id": prod.id,
-        "Name": prod.name,
-        "Pricee": prod.unit_price,
-        "Image": prod.image,
-        "Rating": prod.avgRating
+        "id": prod.id,
+        "name": prod.name,
+        "price": prod.unit_price,
+        "image": prod.image,
+        "rating": prod.avgRating
     } for prod in products]
 
 @handle_db_exceptions

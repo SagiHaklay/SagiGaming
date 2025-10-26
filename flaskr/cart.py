@@ -44,22 +44,22 @@ def add_product_to_cart(cart_id):
     check_required(('productId', 'quantity'))
     product_id = request.form['productId']
     quantity = request.form['quantity']
-    if carts.get_cart(id) is None:
+    if carts.get_cart(cart_id) is None:
         abort(404, description=f'Cart {cart_id} does not exist')
     if get_product_in_cart(cart_id, product_id) is not None:
         abort(400, description=f'Product {product_id} already in Cart {cart_id}')
     validate_positive(quantity, 'Quantity')
     prod = get_product(product_id)
-    validate_enough_units_in_stock(quantity, prod['UnitsInStock'])
+    validate_enough_units_in_stock(quantity, prod['units_in_stock'])
     if 'user_id' in session:
         user_id = session['user_id']
         if users.get_active_cart_by_user_id(user_id) != cart_id:
             abort(401, description=f'Cart {cart_id} is not associated with user {user_id}')
-    cart_products.add_product_to_cart(product_id, cart_id, quantity, prod["UnitPrice"])
-    current_app.logger.info('Product %d added to cart %d.', product_id, cart_id)
+    cart_products.add_product_to_cart(product_id, cart_id, quantity, prod["unit_price"])
+    current_app.logger.info('Product %s added to cart %d.', product_id, cart_id)
     return jsonify(MessageResponse('Product added to cart')), 201
         
-@bp.route('/<int:cart_id>/update', methods=('POST',))
+@bp.route('/<int:cart_id>/update', methods=('PATCH',))
 def update_product_in_cart(cart_id):
     check_required(('productId', 'quantity'))
     product_id = request.form['productId']
@@ -70,19 +70,19 @@ def update_product_in_cart(cart_id):
         abort(400, description=f'Product {product_id} is not in Cart {cart_id}')
     validate_positive(quantity, 'Quantity')
     prod = get_product(product_id)
-    validate_enough_units_in_stock(quantity, prod['UnitsInStock'])
+    validate_enough_units_in_stock(quantity, prod['units_in_stock'])
     if 'user_id' in session:
         user_id = session['user_id']
         if users.get_active_cart_by_user_id(user_id) != cart_id:
             abort(401, description=f'Cart {cart_id} is not associated with user {user_id}')
-    cart_products.update_product_in_cart(cart_id, product_id, quantity, prod['UnitPrice'])
-    current_app.logger.info('Product %d updated in cart %d.', product_id, cart_id)
+    cart_products.update_product_in_cart(cart_id, product_id, quantity, prod['unit_price'])
+    current_app.logger.info('Product %s updated in cart %d.', product_id, cart_id)
     return jsonify(MessageResponse('Product updated in cart'))
 
-@bp.route('/<int:cart_id>/remove', methods=('POST',))
-def remove_product_from_cart(cart_id):
+@bp.route('/<int:cart_id>/remove/<int:product_id>', methods=('DELETE',))
+def remove_product_from_cart(cart_id, product_id):
     check_required(('productId',))
-    product_id = request.form['productId']
+    # product_id = request.form['productId']
     if carts.get_cart(cart_id) is None:
         abort(404, description=f'Cart {cart_id} does not exist')
     if get_product_in_cart(cart_id, product_id) is None:
@@ -92,7 +92,7 @@ def remove_product_from_cart(cart_id):
         if users.get_active_cart_by_user_id(user_id) != cart_id:
             abort(401, description=f'Cart {cart_id} is not associated with user {user_id}')
     cart_products.delete_product_from_cart(cart_id, product_id)
-    current_app.logger.info('Product %d removed from cart %d.', product_id, cart_id)
+    current_app.logger.info('Product %s removed from cart %d.', product_id, cart_id)
     return jsonify(MessageResponse('Product removed from cart'))
 
 @bp.route('/<int:cart_id>/order', methods=('POST',))
@@ -112,7 +112,7 @@ def send_order(cart_id):
     if users.get_active_cart_by_user_id(user_id) != cart_id:
         abort(401, description=f'Cart {cart_id} is not associated with user {user_id}')
     for prod in cart_prods:
-        cart_products.update_product_in_cart(cart_id, prod['Id'], prod['Quantity'], prod['UnitPrice'])
+        cart_products.update_product_in_cart(cart_id, prod['id'], prod['quantity'], prod['unit_price'])
     new_order = orders.add_order(cart_id, user_id, date, city, street, houseNum)
-    current_app.logger.info('Order %d sent.', new_order['OrderId'])
-    return new_order
+    current_app.logger.info('Order %d sent.', new_order['order_id'])
+    return jsonify(new_order)

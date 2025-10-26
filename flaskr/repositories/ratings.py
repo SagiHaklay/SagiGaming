@@ -9,7 +9,7 @@ def get_rating(user_id, product_id):
     existing_rating = cursor.fetchone()
     cursor.close()
     return existing_rating'''
-    rating = orm_db.session.execute(select(ProductRating).where(ProductRating.user_id == user_id and ProductRating.product_id == product_id)).scalar()
+    rating = orm_db.session.execute(select(ProductRating).where(ProductRating.user_id == user_id).where(ProductRating.product_id == product_id)).scalar()
     if rating is None:
         return None
     return rating.to_dict()

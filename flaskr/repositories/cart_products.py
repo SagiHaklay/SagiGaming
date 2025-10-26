@@ -25,12 +25,12 @@ def get_cart_products_by_cart_id(cart_id):
         ).where(CartProduct.cart_id == cart_id)
     products = orm_db.session.execute(query)
     return [{
-        "Id": prod.id,
-        "Name": prod.name,
-        "UnitPrice": prod.unit_price,
-        "Image": prod.image,
-        "Quantity": prod.quantity,
-        "UnitsInStock": prod.units_in_stock
+        "id": prod.id,
+        "name": prod.name,
+        "unit_price": prod.unit_price,
+        "image": prod.image,
+        "quantity": prod.quantity,
+        "units_in_stock": prod.units_in_stock
     } for prod in products]
 
 @handle_db_exceptions
