@@ -25,10 +25,15 @@ def create_app():
 
     @app.errorhandler(db.DBError)
     def handle_db_error(error):
+        if isinstance(error, db.DBQueryError):
+            app.logger.error('Error executing query: %s with params: %s.', error.query, str(error.params))
+        else:
+            app.logger.error(error.to_dict()['message'])
         return jsonify(error.to_dict()), 500
 
     @app.errorhandler(HTTPException)
     def handle_http_error(error: HTTPException):
+        app.logger.error('Error %d: %s', error.code, error.description)
         return jsonify(MessageResponse(error.description, False)), error.code
     
 

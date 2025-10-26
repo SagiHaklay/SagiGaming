@@ -1,5 +1,5 @@
 from flask import (
-    Blueprint, request, abort, jsonify
+    Blueprint, request, abort, jsonify, current_app
 )
 from flaskr.repositories.users import get_user_by_email, set_password, update_user, set_active_cart_id, get_user_by_id
 from flaskr.repositories.carts import set_as_user_cart, get_cart
@@ -20,6 +20,7 @@ def edit_profile(id):
     if same_email_user is not None and same_email_user['Id'] != id:
         abort(400, description='Email is already used by an existing user')
     update_user(first_name, last_name, email, phone, id)
+    current_app.logger.info('User account %d updated.', id)
     return get_user_by_id(id)
 
 @bp.route('/<int:id>/cart', methods=('POST',))
@@ -37,6 +38,7 @@ def set_active_cart(id):
     set_active_cart_id(cart_id, id)
     # set the cart's IsGuestCart field to false
     set_as_user_cart(cart_id)
+    current_app.logger.info('Cart %d is now associated with user %d.', cart_id, id)
     return jsonify(CartResponse(cart_id, id))
 
 @bp.route('/<int:id>/change_password', methods=('POST',))
@@ -45,4 +47,5 @@ def change_password(id):
     check_required(('password',))
     password = request.form['password']
     set_password(id, password)
+    current_app.logger.info('Password changed')
     return jsonify(MessageResponse('Password changed successfully'))

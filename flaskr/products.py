@@ -1,5 +1,5 @@
 from flask import (
-    Blueprint, request, abort, session, jsonify
+    Blueprint, request, abort, session, jsonify, current_app
 )
 from flaskr.validation import validate_login, validate_rating, check_required
 from flaskr.repositories import products, categories, manufacturers, models, ratings
@@ -57,5 +57,6 @@ def rate_product(id):
     if existing_rating:
         abort(401, description=f'User {user_id} already rated product {id}')
     ratings.add_rating(user_id, id, rating)
+    current_app.logger.info('Proudct %d rated %d by user %d.', id, rating, user_id)
     avg_rating = ratings.get_average_rating_for_product(id)
     return jsonify(RatingResponse(avg_rating))

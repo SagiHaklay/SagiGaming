@@ -25,6 +25,7 @@ def register():
     if get_user_by_email(email) is not None:
         abort(400, description='Email is already used by an existing user')
     add_user(first_name, last_name, email, phone, password)
+    current_app.logger.info('New User registered (email: %s)', email)
     return jsonify(MessageResponse('Register success'))
 
 @bp.route('/login', methods=('POST',))
@@ -35,6 +36,7 @@ def login():
     user = get_user_by_email_and_password(email, password)
     if user:
         session['user_id'] = user['id']
+        current_app.logger.info('User %d logged in.', user['id'])
         return user
     abort(401)
 
@@ -43,6 +45,7 @@ def login():
 @bp.route('/logout', methods=('GET', 'POST'))
 def logout():
     session.clear()
+    current_app.logger.info('User logged out')
     return jsonify(MessageResponse('Logout success'))
 
 
@@ -61,6 +64,7 @@ def send_reset_password_email():
     email_msg = EmailMessage(subject='Reset Password', body=email_body, to=[email])
     email_msg.content_subtype = 'html'
     email_msg.send()
+    current_app.logger.info('Password reset email sent.')
     return jsonify(MessageResponse('Message sent'))
 
 @bp.route('/password_reset/<token>/<int:user_id>', methods=('POST',))
@@ -77,4 +81,5 @@ def reset_password(token, user_id):
         abort(401, description='Invalid token')
     password = request.form['password']
     set_password(user_id, password)
+    current_app.logger.info('Password reset successsfully')
     return jsonify(MessageResponse('Password reset successsfully'))
