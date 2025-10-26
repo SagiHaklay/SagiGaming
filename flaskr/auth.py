@@ -1,5 +1,5 @@
 from flask import (
-    Blueprint, request, abort, session, url_for, current_app, render_template_string, jsonify
+    Blueprint, request, abort, session, url_for, current_app, render_template_string, jsonify, render_template
 )
 
 from flaskr.repositories.users import get_user_by_email, set_password, add_user, get_user_by_email_and_password, get_user_by_id
@@ -56,30 +56,39 @@ def send_reset_password_email():
     user = get_user_by_email(email)
     if user is None:
         abort(404, description='Email address does not belong to any existing user.')
+    current_app.logger.debug(user)
     serializer = URLSafeTimedSerializer(current_app.config['SECRET_KEY'])
-    token = serializer.dumps(email, salt=user['Password'])
+    token = serializer.dumps(email, salt=user['password'])
     # change url to the appropriate password reset form url
-    reset_password_url = url_for('auth/reset_password', token=token, user_id=user['Id'], _external=True)
-    email_body = render_template_string(reset_password_email_html_content, reset_password_url=reset_password_url)
-    email_msg = EmailMessage(subject='Reset Password', body=email_body, to=[email])
-    email_msg.content_subtype = 'html'
-    email_msg.send()
-    current_app.logger.info('Password reset email sent.')
-    return jsonify(MessageResponse('Message sent'))
+    reset_password_url = url_for('auth.reset_password', token=token, user_id=user['id'], _external=True)
+    # email_body = render_template_string(reset_password_email_html_content, reset_password_url=reset_password_url)
+    # email_msg = EmailMessage(subject='Reset Password', body=email_body, to=[email])
+    # email_msg.content_subtype = 'html'
+    # email_msg.send()
+    # current_app.logger.info('Password reset email sent.')
+    # return jsonify(MessageResponse('Message sent'))
+    return {
+        'url': reset_password_url
+    }
 
-@bp.route('/password_reset/<token>/<int:user_id>', methods=('POST',))
+@bp.route('/reset_password/<token>/<int:user_id>', methods=('GET', 'POST'))
 def reset_password(token, user_id):
-    user = get_user_by_id(user_id)
-    if user is None:
-        abort(404, description='User does not exist')
-    serializer = URLSafeTimedSerializer(current_app.config['SECRET_KEY'])
-    try:
-        token_user_email = serializer.loads(token, max_age=600, salt=user['Password'])
-    except (BadSignature, SignatureExpired):
-        abort(401, description='Invalid token')
-    if token_user_email != user['Email']:
-        abort(401, description='Invalid token')
-    password = request.form['password']
-    set_password(user_id, password)
-    current_app.logger.info('Password reset successsfully')
-    return jsonify(MessageResponse('Password reset successsfully'))
+    if request.method == 'POST':
+        user = get_user_by_id(user_id)
+        if user is None:
+            abort(404, description='User does not exist')
+        serializer = URLSafeTimedSerializer(current_app.config['SECRET_KEY'])
+        try:
+            token_user_email = serializer.loads(token, max_age=600, salt=user['password'])
+        except (BadSignature, SignatureExpired):
+            abort(401, description='Invalid token')
+        if token_user_email != user['email']:
+            abort(401, description='Invalid token')
+        password = request.form['password']
+        confirm_password = request.form['confirmPassword']
+        if password != confirm_password:
+            abort(400, description='Passwords are not identical.')
+        set_password(user_id, password)
+        current_app.logger.info('Password reset successsfully')
+        return jsonify(MessageResponse('Password reset successsfully'))
+    return render_template('reset-password-form.html')

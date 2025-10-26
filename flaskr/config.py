@@ -4,3 +4,6 @@ MYSQL_USER = 'root'
 MYSQL_PASSWORD = 'Mysqlpassword42!'
 MYSQL_DB = 'sagigaming'
 SQLALCHEMY_DATABASE_URI = "mysql+mysqldb://root:Mysqlpassword42!@localhost/sagigaming"
+MAIL_DEFAULT_SENDER = "sahaklay@gmail.com"
+# MAIL_USERNAME = "sahaklay@gmail.com"
+# MAIL_PASSWORD = "adhthakl"

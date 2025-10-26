@@ -2,13 +2,14 @@ import os
 
 from flask import Flask, jsonify
 from werkzeug.exceptions import HTTPException
+from flask_mailman import Mail
 from flaskr.response import MessageResponse
 
 def create_app():
     app = Flask(__name__)
     
     app.config.from_object('flaskr.config')
-    
+    mail = Mail(app)
     from . import db
     db.init_app(app)
 

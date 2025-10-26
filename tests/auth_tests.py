@@ -17,12 +17,19 @@ def test_login(email, password):
         'email': email,
         'password': password
     })
-    print(r.text)
+    print(r.json())
 
 def test_logout():
     r = requests.post(base_url+'/auth/logout')
     print(r.json())
 
-test_register('firstname', 'lastname', 'abc@gmail.com', '0541234567', 'password1')
-test_login('abc@gmail.com', 'password1')
-test_logout()
+def test_password_reset(email):
+    r = requests.post(base_url+'/auth/password_reset', data={
+        'email': email
+    })
+    print(r.text)
+
+# test_register('firstname', 'lastname', 'abc@gmail.com', '0541234567', 'password1')
+test_login('sahaklay@gmail.com', 'password2')
+# test_logout()
+# test_password_reset('sahaklay@gmail.com')
