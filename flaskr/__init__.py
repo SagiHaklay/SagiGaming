@@ -12,7 +12,9 @@ def create_app():
     mail = Mail(app)
     from . import db
     db.init_app(app)
-
+    import flaskr.models
+    with app.app_context():
+        db.orm_db.create_all()
     from . import products
     app.register_blueprint(products.bp)
 
